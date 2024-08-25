@@ -1,20 +1,20 @@
 {
-  "name": "claude-dev",
-  "displayName": "Claude Dev",
-  "description": "Autonomous coding agent right in your IDE, capable of creating/editing files, executing commands, and more with your permission every step of the way.",
-  "version": "1.3.43",
+  "name": "onedotieblockbuilder",
+  "displayName": "ONE",
+  "description": "Build your app with AI-powered blocks. Powered by Sveltekit, Supabase, Typescript and Claude.",
+  "version": "1.1.0",
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.84.0"
   },
   "author": {
-    "name": "Saoud Rizwan"
+    "name": "Anthony O'Connell"
   },
   "license": "MIT",
-  "publisher": "saoudrizwan",
+  "publisher": "ONEIE",
   "repository": {
     "type": "git",
-    "url": "https://github.com/saoudrizwan/claude-dev"
+    "url": "https://github.com/one-ie/vsone"
   },
   "categories": [
     "AI"
@@ -23,8 +23,8 @@
     "AI",
     "Claude",
     "agentic",
-    "productivity",
-    "automation"
+    "Sveltekit",
+    "Svelte"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",

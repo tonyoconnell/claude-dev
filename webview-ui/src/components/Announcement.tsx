@@ -29,26 +29,27 @@ const Announcement = ({ version, hideAnnouncement }: AnnouncementProps) => {
 			<ul style={{ margin: "0 0 8px", paddingLeft: "20px" }}>
 				<li>Task history is here! New tasks will automatically save so you can always resume them later</li>
 				<li>
-					Adds support for{" "}
-					<VSCodeLink href="https://www.anthropic.com/news/prompt-caching" style={{ display: "inline" }}>
-						Prompt Caching
-					</VSCodeLink>{" "}
-					to make requests up to 90% cheaper and 85% faster (currently only available through Anthropic API
-					for Claude 3.5 Sonnet and Claude 3.0 Haiku)
+					Open in the editor (using{" "}
+					<span
+						className="codicon codicon-link-external"
+						style={{ display: "inline", fontSize: "12.5px", verticalAlign: "text-bottom" }}></span>{" "}
+					or <code>ONE: Open In New Tab</code> in command palette) to see how Claude updates your
+					workspace more clearly
 				</li>
 				<li>
-					Paste images in chat and turn mockups into fully functional applications or fix bugs with
-					screenshots
-				</li>
+					New <code style={{ wordBreak: "break-all" }}>list_files_recursive</code> and{" "}
+					<code style={{ wordBreak: "break-all" }}>view_source_code_definitions_top_level</code> tools to help
+					Claude get a comprehensive overview of your project's file structure and source code definitions
+					</li>
 				<li>
-					You can now add custom instructions to the end of the system prompt (e.g. "Always use Python",
-					"Speak in Spanish")
+					Add support for Prompt Caching to significantly reduce costs and response times (currently only available through Anthropic API for Claude 3.5 Sonnet and Claude 3.0 Haiku)
+
 				</li>
 			</ul>
 			<p style={{ margin: "0" }}>
 				Follow me for more updates!{" "}
-				<VSCodeLink href="https://x.com/sdrzn" style={{ display: "inline" }}>
-					@sdrzn
+				<VSCodeLink href="https://x.com/tonyoconnell" style={{ display: "inline" }}>
+					@tonyoconnell
 				</VSCodeLink>
 			</p>
 		</div>

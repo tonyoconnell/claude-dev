@@ -488,18 +488,22 @@ const ChatView = ({
 				<>
 					{showAnnouncement && <Announcement version={version} hideAnnouncement={hideAnnouncement} />}
 					<div style={{ padding: "0 20px", flexGrow: taskHistory.length > 0 ? undefined : 1 }}>
-						<h2>What can I do for you?</h2>
-						<p>
-							Thanks to{" "}
-							<VSCodeLink
-								href="https://www-cdn.anthropic.com/fed9cc193a14b84131812372d8d5857f8f304c52/Model_Card_Claude_3_Addendum.pdf"
-								style={{ display: "inline" }}>
-								Claude 3.5 Sonnet's agentic coding capabilities,
-							</VSCodeLink>{" "}
-							I can handle complex software development tasks step-by-step. With tools that let me create
-							& edit files, explore complex projects, and execute terminal commands (after you grant
-							permission), I can assist you in ways that go beyond simple code completion or tech support.
-						</p>
+							<h2>What do you want to do?</h2>
+							<p>I'm here to supercharge your Sveltekit development workflow! Just upload a picture or type your instructions in the chat.</p>
+							<div style={{ display: "flex", justifyContent: "space-around", marginBottom: "15px" }}>
+								<div style={{ textAlign: "center" }}>
+									<span style={{ fontSize: "24px" }}>📝</span>
+									<p>Create & Edit Files</p>
+								</div>
+								<div style={{ textAlign: "center" }}>
+									<span style={{ fontSize: "24px" }}>🔍</span>
+									<p>Analyze Source Code</p>
+								</div>
+								<div style={{ textAlign: "center" }}>
+									<span style={{ fontSize: "24px" }}>⚙️</span>
+									<p>Execute Commands</p>
+								</div>
+							</div>
 					</div>
 					{taskHistory.length > 0 && (
 						<HistoryPreview taskHistory={taskHistory} showHistoryView={showHistoryView} />
