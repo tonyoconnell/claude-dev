@@ -34,7 +34,7 @@
         {
           "id": "claude-dev-ActivityBar",
           "title": "Claude Dev",
-          "icon": "$(robot)"
+          "icon": "$(account)"
         }
       ]
     },
