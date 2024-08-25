@@ -19,20 +19,20 @@ let outputChannel: vscode.OutputChannel
 export function activate(context: vscode.ExtensionContext) {
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
-	//console.log('Congratulations, your extension "claude-dev" is now active!')
+	//console.log('Congratulations, your extension "vsone" is now active!')
 
-	outputChannel = vscode.window.createOutputChannel("Claude Dev")
+	outputChannel = vscode.window.createOutputChannel("ONE")
 	context.subscriptions.push(outputChannel)
 
-	outputChannel.appendLine("Claude Dev extension activated")
+	outputChannel.appendLine("ONE extension activated")
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
-	// const disposable = vscode.commands.registerCommand("claude-dev.helloWorld", () => {
+	// const disposable = vscode.commands.registerCommand("vsone.helloWorld", () => {
 	// 	// The code you place here will be executed every time your command is executed
 	// 	// Display a message box to the user
-	// 	vscode.window.showInformationMessage("Hello World from claude-dev!")
+	// 	vscode.window.showInformationMessage("Hello World from vsone!")
 	// })
 	// context.subscriptions.push(disposable)
 
@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("claude-dev.plusButtonTapped", async () => {
+		vscode.commands.registerCommand("vsone.plusButtonTapped", async () => {
 			outputChannel.appendLine("Plus button tapped")
 			await sidebarProvider.clearTask()
 			await sidebarProvider.postStateToWebview()
@@ -54,14 +54,14 @@ export function activate(context: vscode.ExtensionContext) {
 	)
 
 	const openClaudeDevInNewTab = () => {
-		outputChannel.appendLine("Opening Claude Dev in new tab")
+		outputChannel.appendLine("Opening ONE in new tab")
 		// (this example uses webviewProvider activation event which is necessary to deserialize cached webview, but since we use retainContextWhenHidden, we don't need to use that event)
 		// https://github.com/microsoft/vscode-extension-samples/blob/main/webview-sample/src/extension.ts
 		const tabProvider = new ClaudeDevProvider(context, outputChannel)
 		//const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined
 		const lastCol = Math.max(...vscode.window.visibleTextEditors.map((editor) => editor.viewColumn || 0))
 		const targetCol = Math.max(lastCol + 1, 1)
-		const panel = vscode.window.createWebviewPanel(ClaudeDevProvider.tabPanelId, "Claude Dev", targetCol, {
+		const panel = vscode.window.createWebviewPanel(ClaudeDevProvider.tabPanelId, "ONE", targetCol, {
 			enableScripts: true,
 			retainContextWhenHidden: true,
 			localResourceRoots: [context.extensionUri],
@@ -76,19 +76,19 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 	}
 
-	context.subscriptions.push(vscode.commands.registerCommand("claude-dev.popoutButtonTapped", openClaudeDevInNewTab))
-	context.subscriptions.push(vscode.commands.registerCommand("claude-dev.openInNewTab", openClaudeDevInNewTab))
+	context.subscriptions.push(vscode.commands.registerCommand("vsone.popoutButtonTapped", openClaudeDevInNewTab))
+	context.subscriptions.push(vscode.commands.registerCommand("vsone.openInNewTab", openClaudeDevInNewTab))
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("claude-dev.settingsButtonTapped", () => {
-			//const message = "claude-dev.settingsButtonTapped!"
+		vscode.commands.registerCommand("vsone.settingsButtonTapped", () => {
+			//const message = "vsone.settingsButtonTapped!"
 			//vscode.window.showInformationMessage(message)
 			sidebarProvider.postMessageToWebview({ type: "action", action: "settingsButtonTapped" })
 		})
 	)
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand("claude-dev.historyButtonTapped", () => {
+		vscode.commands.registerCommand("vsone.historyButtonTapped", () => {
 			sidebarProvider.postMessageToWebview({ type: "action", action: "historyButtonTapped" })
 		})
 	)
@@ -106,11 +106,11 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	})()
 	context.subscriptions.push(
-		vscode.workspace.registerTextDocumentContentProvider("claude-dev-diff", diffContentProvider)
+		vscode.workspace.registerTextDocumentContentProvider("vsone-diff", diffContentProvider)
 	)
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-	outputChannel.appendLine("Claude Dev extension deactivated")
+	outputChannel.appendLine("ONE extension deactivated")
 }

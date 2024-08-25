@@ -1,23 +1,19 @@
 # Change Log
 
-All notable changes to the "claude-dev" extension will be documented in this file.
+All notable changes to the "vsone" extension will be documented in this file.
 
 <!-- Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file. -->
 
-## [1.3.0]
+## [1.2.0]
 
 - Add task history
 
-## [1.2.0]
-
 - Add support for Prompt Caching to significantly reduce costs and response times (currently only available through Anthropic API for Claude 3.5 Sonnet and Claude 3.0 Haiku)
-
-## [1.1.1]
 
 - Adds option to choose other Claude models (+ GPT-4o, DeepSeek, and Mistral if you use OpenRouter)
 - Adds option to add custom instructions to the end of the system prompt
 
-## [1.1.0]
+## [1.0.10]
 
 - Paste images in chat to use Claude's vision capabilities and turn mockups into fully functional applications or fix bugs with screenshots
 
@@ -44,7 +40,7 @@ All notable changes to the "claude-dev" extension will be documented in this fil
 
 ## [1.0.4]
 
-- Open in the editor (using menu bar or `Claude Dev: Open In New Tab` in command palette) to see how Claude updates your workspace more clearly
+- Open in the editor (using menu bar or `ONE: Open In New Tab` in command palette) to see how Claude updates your workspace more clearly
 - New `analyze_project` tool to help Claude get a comprehensive overview of your project's source code definitions and file structure
 - Provide feedback to tool use like terminal commands and file edits
 - Updated max output tokens to 8192 so less lazy coding (`// rest of code here...`)

@@ -32,69 +32,69 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "claude-dev-ActivityBar",
-          "title": "Claude Dev",
-          "icon": "$(account)"
+          "id": "vsone-ActivityBar",
+          "title": "ONE",
+          "icon": "$(lightbulb-autofix)"
         }
       ]
     },
     "views": {
-      "claude-dev-ActivityBar": [
+      "vsone-ActivityBar": [
         {
           "type": "webview",
-          "id": "claude-dev.SidebarProvider",
+          "id": "vsone.SidebarProvider",
           "name": ""
         }
       ]
     },
     "commands": [
       {
-        "command": "claude-dev.plusButtonTapped",
+        "command": "vsone.plusButtonTapped",
         "title": "New Task",
         "icon": "$(add)"
       },
       {
-        "command": "claude-dev.historyButtonTapped",
+        "command": "vsone.historyButtonTapped",
         "title": "History",
         "icon": "$(history)"
       },
       {
-        "command": "claude-dev.popoutButtonTapped",
+        "command": "vsone.popoutButtonTapped",
         "title": "Open in Editor",
         "icon": "$(link-external)"
       },
       {
-        "command": "claude-dev.settingsButtonTapped",
+        "command": "vsone.settingsButtonTapped",
         "title": "Settings",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "claude-dev.openInNewTab",
+        "command": "vsone.openInNewTab",
         "title": "Open In New Tab",
-        "category": "Claude Dev"
+        "category": "ONE"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "claude-dev.plusButtonTapped",
+          "command": "vsone.plusButtonTapped",
           "group": "navigation@1",
-          "when": "view == claude-dev.SidebarProvider"
+          "when": "view == vsone.SidebarProvider"
         },
         {
-          "command": "claude-dev.historyButtonTapped",
+          "command": "vsone.historyButtonTapped",
           "group": "navigation@2",
-          "when": "view == claude-dev.SidebarProvider"
+          "when": "view == vsone.SidebarProvider"
         },
         {
-          "command": "claude-dev.popoutButtonTapped",
+          "command": "vsone.popoutButtonTapped",
           "group": "navigation@3",
-          "when": "view == claude-dev.SidebarProvider"
+          "when": "view == vsone.SidebarProvider"
         },
         {
-          "command": "claude-dev.settingsButtonTapped",
+          "command": "vsone.settingsButtonTapped",
           "group": "navigation@4",
-          "when": "view == claude-dev.SidebarProvider"
+          "when": "view == vsone.SidebarProvider"
         }
       ]
     }

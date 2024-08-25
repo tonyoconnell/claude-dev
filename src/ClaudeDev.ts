@@ -555,7 +555,7 @@ export class ClaudeDev {
 					vscode.Uri.file(absolutePath),
 					// to create a virtual doc we use a uri scheme registered in extension.ts, which then converts this base64 content into a text document
 					// (providing file name with extension in the uri lets vscode know the language of the file and apply syntax highlighting)
-					vscode.Uri.parse(`claude-dev-diff:${fileName}`).with({
+					vscode.Uri.parse(`vsone-diff:${fileName}`).with({
 						query: Buffer.from(newContent).toString("base64"),
 					}),
 					`${fileName}: Original ↔ Suggested Changes`
@@ -590,10 +590,10 @@ export class ClaudeDev {
 				const fileName = path.basename(absolutePath)
 				vscode.commands.executeCommand(
 					"vscode.diff",
-					vscode.Uri.parse(`claude-dev-diff:${fileName}`).with({
+					vscode.Uri.parse(`vsone-diff:${fileName}`).with({
 						query: Buffer.from("").toString("base64"),
 					}),
-					vscode.Uri.parse(`claude-dev-diff:${fileName}`).with({
+					vscode.Uri.parse(`vsone-diff:${fileName}`).with({
 						query: Buffer.from(newContent).toString("base64"),
 					}),
 					`${fileName}: New File`
@@ -640,7 +640,7 @@ export class ClaudeDev {
 			.flat()
 			.filter(
 				(tab) =>
-					tab.input instanceof vscode.TabInputTextDiff && tab.input?.modified?.scheme === "claude-dev-diff"
+					tab.input instanceof vscode.TabInputTextDiff && tab.input?.modified?.scheme === "vsone-diff"
 			)
 		for (const tab of tabs) {
 			await vscode.window.tabGroups.close(tab)
@@ -1030,7 +1030,7 @@ ${this.customInstructions.trim()}
 		if (this.requestCount >= this.maxRequestsPerTask) {
 			const { response } = await this.ask(
 				"request_limit_reached",
-				`Claude Dev has reached the maximum number of requests for this task. Would you like to reset the count and allow him to proceed?`
+				`ONE has reached the maximum number of requests for this task. Would you like to reset the count and allow him to proceed?`
 			)
 
 			if (response === "yesButtonTapped") {
