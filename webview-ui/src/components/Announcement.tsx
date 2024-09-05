@@ -1,13 +1,19 @@
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
+import { ApiConfiguration } from "../../../src/shared/api"
+// import VSCodeButtonLink from "./VSCodeButtonLink"
+// import { getOpenRouterAuthUrl } from "./ApiOptions"
+// import { vscode } from "../utils/vscode"
 
 interface AnnouncementProps {
 	version: string
 	hideAnnouncement: () => void
+	apiConfiguration?: ApiConfiguration
+	vscodeUriScheme?: string
 }
 /*
 You must update the latestAnnouncementId in ClaudeDevProvider for new announcements to show to users. This new id will be compared with whats in state for the 'last announcement shown', and if it's different then the announcement will render. As soon as an announcement is shown, the id will be updated in state. This ensures that announcements are not shown more than once, even if the user doesn't close it themselves.
 */
-const Announcement = ({ version, hideAnnouncement }: AnnouncementProps) => {
+const Announcement = ({ version, hideAnnouncement, apiConfiguration, vscodeUriScheme }: AnnouncementProps) => {
 	return (
 		<div
 			style={{
@@ -26,8 +32,39 @@ const Announcement = ({ version, hideAnnouncement }: AnnouncementProps) => {
 			<h3 style={{ margin: "0 0 8px" }}>
 				🎉{"  "}New in v{version}
 			</h3>
-			<ul style={{ margin: "0 0 8px", paddingLeft: "20px" }}>
-				<li>Task history is here! New tasks will automatically save so you can always resume them later</li>
+			<ul style={{ margin: "0 0 8px", paddingLeft: "12px" }}>
+				{/* <li>
+					OpenRouter now supports prompt caching! They also have much higher rate limits than other providers,
+					so I recommend trying them out.
+					<br />
+					{!apiConfiguration?.openRouterApiKey && (
+						<VSCodeButtonLink
+							href={getOpenRouterAuthUrl(vscodeUriScheme)}
+							style={{
+								transform: "scale(0.85)",
+								transformOrigin: "left center",
+								margin: "4px -30px 2px 0",
+							}}>
+							Get OpenRouter API Key
+						</VSCodeButtonLink>
+					)}
+					{apiConfiguration?.openRouterApiKey && apiConfiguration?.apiProvider !== "openrouter" && (
+						<VSCodeButton
+							onClick={() => {
+								vscode.postMessage({
+									type: "apiConfiguration",
+									apiConfiguration: { ...apiConfiguration, apiProvider: "openrouter" },
+								})
+							}}
+							style={{
+								transform: "scale(0.85)",
+								transformOrigin: "left center",
+								margin: "4px -30px 2px 0",
+							}}>
+							Switch to OpenRouter
+						</VSCodeButton>
+					)}
+				</li> */}
 				<li>
 					Open in the editor (using{" "}
 					<span

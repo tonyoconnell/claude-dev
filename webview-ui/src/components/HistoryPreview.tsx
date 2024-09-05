@@ -1,13 +1,13 @@
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
+import { useExtensionState } from "../context/ExtensionStateContext"
 import { vscode } from "../utils/vscode"
-import { HistoryItem } from "../../../src/shared/HistoryItem"
 
 type HistoryPreviewProps = {
-	taskHistory: HistoryItem[]
 	showHistoryView: () => void
 }
 
-const HistoryPreview = ({ taskHistory, showHistoryView }: HistoryPreviewProps) => {
+const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
+	const { taskHistory } = useExtensionState()
 	const handleHistorySelect = (id: string) => {
 		vscode.postMessage({ type: "showTaskWithId", text: id })
 	}
@@ -70,7 +70,7 @@ const HistoryPreview = ({ taskHistory, showHistoryView }: HistoryPreviewProps) =
 
 			<div style={{ padding: "0px 20px 0 20px" }}>
 				{taskHistory
-					.filter((item) => item.ts && item.task && item.totalCost)
+					.filter((item) => item.ts && item.task)
 					.slice(0, 3)
 					.map((item) => (
 						<div
@@ -108,17 +108,21 @@ const HistoryPreview = ({ taskHistory, showHistoryView }: HistoryPreviewProps) =
 									<span>
 										Tokens: ↑{item.tokensIn?.toLocaleString()} ↓{item.tokensOut?.toLocaleString()}
 									</span>
-									{" • "}
-									{item.cacheWrites && item.cacheReads && (
+									{!!item.cacheWrites && (
 										<>
+											{" • "}
 											<span>
 												Cache: +{item.cacheWrites?.toLocaleString()} →{" "}
-												{item.cacheReads?.toLocaleString()}
+												{(item.cacheReads || 0).toLocaleString()}
 											</span>
-											{" • "}
 										</>
 									)}
-									<span>API Cost: ${item.totalCost?.toFixed(4)}</span>
+									{!!item.totalCost && (
+										<>
+											{" • "}
+											<span>API Cost: ${item.totalCost?.toFixed(4)}</span>
+										</>
+									)}
 								</div>
 							</div>
 						</div>

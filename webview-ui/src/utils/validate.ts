@@ -9,8 +9,8 @@ export function validateApiConfiguration(apiConfiguration?: ApiConfiguration): s
 				}
 				break
 			case "bedrock":
-				if (!apiConfiguration.awsAccessKey || !apiConfiguration.awsSecretKey || !apiConfiguration.awsRegion) {
-					return "You must provide a valid AWS access key, secret key, and region."
+				if (!apiConfiguration.awsRegion) {
+					return "You must choose a region to use with AWS Bedrock."
 				}
 				break
 			case "openrouter":
@@ -18,16 +18,25 @@ export function validateApiConfiguration(apiConfiguration?: ApiConfiguration): s
 					return "You must provide a valid API key or choose a different provider."
 				}
 				break
-		}
-	}
-	return undefined
-}
-
-export function validateMaxRequestsPerTask(maxRequestsPerTask?: string): string | undefined {
-	if (maxRequestsPerTask && maxRequestsPerTask.trim()) {
-		const num = Number(maxRequestsPerTask)
-		if (isNaN(num) || num < 3 || num > 100) {
-			return "Maximum requests must be between 3 and 100"
+			case "vertex":
+				if (!apiConfiguration.vertexProjectId || !apiConfiguration.vertexRegion) {
+					return "You must provide a valid Google Cloud Project ID and Region."
+				}
+				break
+			case "openai":
+				if (
+					!apiConfiguration.openAiBaseUrl ||
+					!apiConfiguration.openAiApiKey ||
+					!apiConfiguration.openAiModelId
+				) {
+					return "You must provide a valid base URL, API key, and model ID."
+				}
+				break
+			case "ollama":
+				if (!apiConfiguration.ollamaModelId) {
+					return "You must provide a valid model ID."
+				}
+				break
 		}
 	}
 	return undefined

@@ -2,7 +2,7 @@
   "name": "onedotieblockbuilder",
   "displayName": "ONE Block",
   "description": "Build your app with AI-powered blocks. Powered by Sveltekit, Supabase, Typescript and Claude.",
-  "version": "1.2.0",
+  "version": "1.5.26",
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.84.0"
@@ -115,7 +115,8 @@
     "install:all": "npm install && cd webview-ui && npm install",
     "start:webview": "cd webview-ui && npm run start",
     "build:webview": "cd webview-ui && npm run build",
-    "test:webview": "cd webview-ui && npm run test"
+    "test:webview": "cd webview-ui && npm run test",
+    "publish:marketplace": "vsce publish && ovsx publish"
   },
   "devDependencies": {
     "@types/diff": "^5.2.1",
@@ -134,15 +135,23 @@
   "dependencies": {
     "@anthropic-ai/bedrock-sdk": "^0.10.2",
     "@anthropic-ai/sdk": "^0.26.0",
+    "@anthropic-ai/vertex-sdk": "^0.4.1",
+    "@types/clone-deep": "^4.0.4",
+    "@types/pdf-parse": "^1.1.4",
     "@vscode/codicons": "^0.0.36",
+    "axios": "^1.7.4",
+    "clone-deep": "^4.0.1",
     "default-shell": "^2.2.0",
     "delay": "^6.0.0",
     "diff": "^5.2.0",
     "execa": "^9.3.0",
     "globby": "^14.0.2",
+    "isbinaryfile": "^5.0.2",
+    "mammoth": "^1.8.0",
     "openai": "^4.54.0",
     "os-name": "^6.0.0",
     "p-wait-for": "^5.0.2",
+    "pdf-parse": "^1.1.1",
     "serialize-error": "^11.0.3",
     "tree-kill": "^1.2.2",
     "tree-sitter-wasms": "^0.1.11",

@@ -4,11 +4,41 @@ All notable changes to the "vsone" extension will be documented in this file.
 
 <!-- Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file. -->
 
+## [1.5.19]
+
+- Adds support for OpenAI compatible API providers (e.g. Ollama!)
+
+## [1.5.13]
+
+- New terminal emulator! When Claude runs commands, you can now type directly in the terminal (+ support for Python environments)
+- Adds search to Task History
+
+## [1.5.6]
+
+- You can now edit Claude's changes before accepting! When he edits or creates a file, you can modify his changes directly in the right side of the diff view (+ hover over the 'Revert Block' arrow button in the center to undo `// rest of code here` shenanigans)
+
+## [1.5.4]
+
+- Adds support for reading .pdf and .docx files (try "turn my business_plan.docx into a company website")
+
+## [1.5.0]
+
+- Adds new `search_files` tool that lets Claude perform regex searches in your project, making it easy for him to refactor code, address TODOs and FIXMEs, remove dead code, and more!
+
+## [1.4.0]
+
+- Adds "Always allow read-only operations" setting to let Claude read files and view directories without needing approval (off by default)
+- Implement sliding window context management to keep tasks going past 200k tokens
+- Adds Google Cloud Vertex AI support and updates Claude 3.5 Sonnet max output to 8192 tokens for all providers.
+- Improves system prompt to gaurd against lazy edits (less "//rest of code here")
+
+## [1.3.0]
+
+- Adds task history
+
 ## [1.2.0]
 
-- Add task history
-
-- Add support for Prompt Caching to significantly reduce costs and response times (currently only available through Anthropic API for Claude 3.5 Sonnet and Claude 3.0 Haiku)
+- Adds support for Prompt Caching to significantly reduce costs and response times (currently only available through Anthropic API for Claude 3.5 Sonnet and Claude 3.0 Haiku)
 
 - Adds option to choose other Claude models (+ GPT-4o, DeepSeek, and Mistral if you use OpenRouter)
 - Adds option to add custom instructions to the end of the system prompt

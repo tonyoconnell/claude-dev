@@ -1,13 +1,14 @@
 import { Anthropic } from "@anthropic-ai/sdk"
 import * as vscode from "vscode"
 import { ClaudeDev } from "../ClaudeDev"
-import { ApiModelId, ApiProvider } from "../shared/api"
+import { ApiProvider } from "../shared/api"
 import { ExtensionMessage } from "../shared/ExtensionMessage"
 import { WebviewMessage } from "../shared/WebviewMessage"
-import { downloadTask, getNonce, getUri, selectImages } from "../utils"
+import { downloadTask, findLast, getNonce, getUri, selectImages } from "../utils"
 import * as path from "path"
 import fs from "fs/promises"
 import { HistoryItem } from "../shared/HistoryItem"
+import axios from "axios"
 
 /*
 https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -15,26 +16,55 @@ https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default
 https://github.com/KumarVariable/vscode-extension-sidebar-html/blob/master/src/customSidebarViewProvider.ts
 */
 
-type SecretKey = "apiKey" | "openRouterApiKey" | "awsAccessKey" | "awsSecretKey"
+type SecretKey = "apiKey" | "openRouterApiKey" | "awsAccessKey" | "awsSecretKey" | "awsSessionToken" | "openAiApiKey"
 type GlobalStateKey =
 	| "apiProvider"
 	| "apiModelId"
 	| "awsRegion"
-	| "maxRequestsPerTask"
+	| "vertexProjectId"
+	| "vertexRegion"
 	| "lastShownAnnouncementId"
 	| "customInstructions"
+	| "alwaysAllowReadOnly"
 	| "taskHistory"
+	| "openAiBaseUrl"
+	| "openAiModelId"
+	| "ollamaModelId"
 
 export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 	public static readonly sideBarId = "vsone.SidebarProvider" // used in package.json as the view's id. This value cannot be changed due to how vscode caches views based on their id, and updating the id would break existing instances of the extension.
 	public static readonly tabPanelId = "vsone.TabPanelProvider"
+	private static activeInstances: Set<ClaudeDevProvider> = new Set()
 	private disposables: vscode.Disposable[] = []
 	private view?: vscode.WebviewView | vscode.WebviewPanel
 	private claudeDev?: ClaudeDev
-	private latestAnnouncementId = "aug-17-2024" // update to some unique identifier when we add a new announcement
+	private latestAnnouncementId = "sep-2-2024" // update to some unique identifier when we add a new announcement
 
 	constructor(readonly context: vscode.ExtensionContext, private readonly outputChannel: vscode.OutputChannel) {
 		this.outputChannel.appendLine("ClaudeDevProvider instantiated")
+		ClaudeDevProvider.activeInstances.add(this)
+		this.revertKodu()
+	}
+
+	async revertKodu() {
+		const apiProvider = await this.getGlobalState("apiProvider")
+		if (apiProvider === "kodu") {
+			// switch back to previous provider
+			const anthropicKey = await this.getSecret("apiKey")
+			if (anthropicKey) {
+				await this.updateGlobalState("apiProvider", "anthropic" as ApiProvider)
+			} else {
+				const openRouterApiKey = await this.getSecret("openRouterApiKey")
+				if (openRouterApiKey) {
+					await this.updateGlobalState("apiProvider", "openrouter" as ApiProvider)
+				} else {
+					const awsAccessKey = await this.getSecret("awsAccessKey")
+					if (awsAccessKey) {
+						await this.updateGlobalState("apiProvider", "bedrock" as ApiProvider)
+					}
+				}
+			}
+		}
 	}
 
 	/*
@@ -57,6 +87,11 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 			}
 		}
 		this.outputChannel.appendLine("Disposed all disposables")
+		ClaudeDevProvider.activeInstances.delete(this)
+	}
+
+	public static getVisibleInstance(): ClaudeDevProvider | undefined {
+		return findLast(Array.from(this.activeInstances), (instance) => instance.view?.visible === true)
 	}
 
 	resolveWebviewView(
@@ -141,18 +176,18 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 
 	async initClaudeDevWithTask(task?: string, images?: string[]) {
 		await this.clearTask() // ensures that an exising task doesn't exist before starting a new one, although this shouldn't be possible since user must clear task before starting a new one
-		const { maxRequestsPerTask, apiConfiguration, customInstructions } = await this.getState()
-		this.claudeDev = new ClaudeDev(this, apiConfiguration, maxRequestsPerTask, customInstructions, task, images)
+		const { apiConfiguration, customInstructions, alwaysAllowReadOnly } = await this.getState()
+		this.claudeDev = new ClaudeDev(this, apiConfiguration, customInstructions, alwaysAllowReadOnly, task, images)
 	}
 
 	async initClaudeDevWithHistoryItem(historyItem: HistoryItem) {
 		await this.clearTask()
-		const { maxRequestsPerTask, apiConfiguration, customInstructions } = await this.getState()
+		const { apiConfiguration, customInstructions, alwaysAllowReadOnly } = await this.getState()
 		this.claudeDev = new ClaudeDev(
 			this,
 			apiConfiguration,
-			maxRequestsPerTask,
 			customInstructions,
+			alwaysAllowReadOnly,
 			undefined,
 			undefined,
 			historyItem
@@ -278,7 +313,14 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 								openRouterApiKey,
 								awsAccessKey,
 								awsSecretKey,
+								awsSessionToken,
 								awsRegion,
+								vertexProjectId,
+								vertexRegion,
+								openAiBaseUrl,
+								openAiApiKey,
+								openAiModelId,
+								ollamaModelId,
 							} = message.apiConfiguration
 							await this.updateGlobalState("apiProvider", apiProvider)
 							await this.updateGlobalState("apiModelId", apiModelId)
@@ -286,27 +328,27 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 							await this.storeSecret("openRouterApiKey", openRouterApiKey)
 							await this.storeSecret("awsAccessKey", awsAccessKey)
 							await this.storeSecret("awsSecretKey", awsSecretKey)
+							await this.storeSecret("awsSessionToken", awsSessionToken)
 							await this.updateGlobalState("awsRegion", awsRegion)
+							await this.updateGlobalState("vertexProjectId", vertexProjectId)
+							await this.updateGlobalState("vertexRegion", vertexRegion)
+							await this.updateGlobalState("openAiBaseUrl", openAiBaseUrl)
+							await this.storeSecret("openAiApiKey", openAiApiKey)
+							await this.updateGlobalState("openAiModelId", openAiModelId)
+							await this.updateGlobalState("ollamaModelId", ollamaModelId)
 							this.claudeDev?.updateApi(message.apiConfiguration)
 						}
-						await this.postStateToWebview()
-						break
-					case "maxRequestsPerTask":
-						let result: number | undefined = undefined
-						if (message.text && message.text.trim()) {
-							const num = Number(message.text)
-							if (!isNaN(num)) {
-								result = num
-							}
-						}
-						await this.updateGlobalState("maxRequestsPerTask", result)
-						this.claudeDev?.updateMaxRequestsPerTask(result)
 						await this.postStateToWebview()
 						break
 					case "customInstructions":
 						// User may be clearing the field
 						await this.updateGlobalState("customInstructions", message.text || undefined)
 						this.claudeDev?.updateCustomInstructions(message.text || undefined)
+						await this.postStateToWebview()
+						break
+					case "alwaysAllowReadOnly":
+						await this.updateGlobalState("alwaysAllowReadOnly", message.bool ?? undefined)
+						this.claudeDev?.updateAlwaysAllowReadOnly(message.bool ?? undefined)
 						await this.postStateToWebview()
 						break
 					case "askResponse":
@@ -340,6 +382,9 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 					case "exportTaskWithId":
 						this.exportTaskWithId(message.text!)
 						break
+					case "resetState":
+						await this.resetState()
+						break
 					// Add more switch case statements here as more webview message commands
 					// are created within the webview context (i.e. inside media/main.js)
 				}
@@ -347,6 +392,30 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 			null,
 			this.disposables
 		)
+	}
+
+	// OpenRouter
+
+	async handleOpenRouterCallback(code: string) {
+		let apiKey: string
+		try {
+			const response = await axios.post("https://openrouter.ai/api/v1/auth/keys", { code })
+			if (response.data && response.data.key) {
+				apiKey = response.data.key
+			} else {
+				throw new Error("Invalid response from OpenRouter API")
+			}
+		} catch (error) {
+			console.error("Error exchanging code for API key:", error)
+			throw error
+		}
+
+		const openrouter: ApiProvider = "openrouter"
+		await this.updateGlobalState("apiProvider", openrouter)
+		await this.storeSecret("openRouterApiKey", apiKey)
+		await this.postStateToWebview()
+		this.claudeDev?.updateApi({ apiProvider: openrouter, openRouterApiKey: apiKey })
+		await this.postMessageToWebview({ type: "action", action: "settingsButtonTapped" })
 	}
 
 	// Task history
@@ -436,21 +505,24 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 	}
 
 	async postStateToWebview() {
-		const { apiConfiguration, maxRequestsPerTask, lastShownAnnouncementId, customInstructions, taskHistory } =
+		const state = await this.getStateToPostToWebview()
+		this.postMessageToWebview({ type: "state", state })
+	}
+
+	async getStateToPostToWebview() {
+		const { apiConfiguration, lastShownAnnouncementId, customInstructions, alwaysAllowReadOnly, taskHistory } =
 			await this.getState()
-		this.postMessageToWebview({
-			type: "state",
-			state: {
-				version: this.context.extension?.packageJSON?.version ?? "",
-				apiConfiguration,
-				maxRequestsPerTask,
-				customInstructions,
-				themeName: vscode.workspace.getConfiguration("workbench").get<string>("colorTheme"),
-				claudeMessages: this.claudeDev?.claudeMessages || [],
-				taskHistory: (taskHistory || []).filter((item) => item.ts && item.task).sort((a, b) => b.ts - a.ts),
-				shouldShowAnnouncement: lastShownAnnouncementId !== this.latestAnnouncementId,
-			},
-		})
+		return {
+			version: this.context.extension?.packageJSON?.version ?? "",
+			apiConfiguration,
+			customInstructions,
+			alwaysAllowReadOnly,
+			themeName: vscode.workspace.getConfiguration("workbench").get<string>("colorTheme"),
+			uriScheme: vscode.env.uriScheme,
+			claudeMessages: this.claudeDev?.claudeMessages || [],
+			taskHistory: (taskHistory || []).filter((item) => item.ts && item.task).sort((a, b) => b.ts - a.ts),
+			shouldShowAnnouncement: lastShownAnnouncementId !== this.latestAnnouncementId,
+		}
 	}
 
 	async clearTask() {
@@ -547,22 +619,36 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 			openRouterApiKey,
 			awsAccessKey,
 			awsSecretKey,
+			awsSessionToken,
 			awsRegion,
-			maxRequestsPerTask,
+			vertexProjectId,
+			vertexRegion,
+			openAiBaseUrl,
+			openAiApiKey,
+			openAiModelId,
+			ollamaModelId,
 			lastShownAnnouncementId,
 			customInstructions,
+			alwaysAllowReadOnly,
 			taskHistory,
 		] = await Promise.all([
 			this.getGlobalState("apiProvider") as Promise<ApiProvider | undefined>,
-			this.getGlobalState("apiModelId") as Promise<ApiModelId | undefined>,
+			this.getGlobalState("apiModelId") as Promise<string | undefined>,
 			this.getSecret("apiKey") as Promise<string | undefined>,
 			this.getSecret("openRouterApiKey") as Promise<string | undefined>,
 			this.getSecret("awsAccessKey") as Promise<string | undefined>,
 			this.getSecret("awsSecretKey") as Promise<string | undefined>,
+			this.getSecret("awsSessionToken") as Promise<string | undefined>,
 			this.getGlobalState("awsRegion") as Promise<string | undefined>,
-			this.getGlobalState("maxRequestsPerTask") as Promise<number | undefined>,
+			this.getGlobalState("vertexProjectId") as Promise<string | undefined>,
+			this.getGlobalState("vertexRegion") as Promise<string | undefined>,
+			this.getGlobalState("openAiBaseUrl") as Promise<string | undefined>,
+			this.getSecret("openAiApiKey") as Promise<string | undefined>,
+			this.getGlobalState("openAiModelId") as Promise<string | undefined>,
+			this.getGlobalState("ollamaModelId") as Promise<string | undefined>,
 			this.getGlobalState("lastShownAnnouncementId") as Promise<string | undefined>,
 			this.getGlobalState("customInstructions") as Promise<string | undefined>,
+			this.getGlobalState("alwaysAllowReadOnly") as Promise<boolean | undefined>,
 			this.getGlobalState("taskHistory") as Promise<HistoryItem[] | undefined>,
 		])
 
@@ -575,7 +661,7 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 			if (apiKey) {
 				apiProvider = "anthropic"
 			} else {
-				// New users should default to anthropic (openrouter has issues, bedrock is complicated)
+				// New users should default to anthropic for now, but will change to openrouter after fast edit mode
 				apiProvider = "anthropic"
 			}
 		}
@@ -588,11 +674,18 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 				openRouterApiKey,
 				awsAccessKey,
 				awsSecretKey,
+				awsSessionToken,
 				awsRegion,
+				vertexProjectId,
+				vertexRegion,
+				openAiBaseUrl,
+				openAiApiKey,
+				openAiModelId,
+				ollamaModelId,
 			},
-			maxRequestsPerTask,
 			lastShownAnnouncementId,
 			customInstructions,
+			alwaysAllowReadOnly: alwaysAllowReadOnly ?? false,
 			taskHistory,
 		}
 	}
@@ -651,5 +744,32 @@ export class ClaudeDevProvider implements vscode.WebviewViewProvider {
 
 	private async getSecret(key: SecretKey) {
 		return await this.context.secrets.get(key)
+	}
+
+	// dev
+
+	async resetState() {
+		vscode.window.showInformationMessage("Resetting state...")
+		for (const key of this.context.globalState.keys()) {
+			await this.context.globalState.update(key, undefined)
+		}
+		const secretKeys: SecretKey[] = [
+			"apiKey",
+			"openRouterApiKey",
+			"awsAccessKey",
+			"awsSecretKey",
+			"awsSessionToken",
+			"openAiApiKey",
+		]
+		for (const key of secretKeys) {
+			await this.storeSecret(key, undefined)
+		}
+		if (this.claudeDev) {
+			this.claudeDev.abortTask()
+			this.claudeDev = undefined
+		}
+		vscode.window.showInformationMessage("State reset")
+		await this.postStateToWebview()
+		await this.postMessageToWebview({ type: "action", action: "chatButtonTapped" })
 	}
 }

@@ -2,25 +2,29 @@ import { VSCodeDropdown, VSCodeLink, VSCodeOption, VSCodeTextField } from "@vsco
 import React, { useMemo } from "react"
 import {
 	ApiConfiguration,
-	ApiModelId,
 	ModelInfo,
 	anthropicDefaultModelId,
 	anthropicModels,
 	bedrockDefaultModelId,
 	bedrockModels,
+	openAiModelInfoSaneDefaults,
 	openRouterDefaultModelId,
 	openRouterModels,
+	vertexDefaultModelId,
+	vertexModels,
 } from "../../../src/shared/api"
+import { useExtensionState } from "../context/ExtensionStateContext"
+import VSCodeButtonLink from "./VSCodeButtonLink"
 
 interface ApiOptionsProps {
 	showModelOptions: boolean
-	apiConfiguration?: ApiConfiguration
-	setApiConfiguration: React.Dispatch<React.SetStateAction<ApiConfiguration | undefined>>
+	apiErrorMessage?: string
 }
 
-const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfiguration, setApiConfiguration }) => {
+const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiErrorMessage }) => {
+	const { apiConfiguration, setApiConfiguration, uriScheme } = useExtensionState()
 	const handleInputChange = (field: keyof ApiConfiguration) => (event: any) => {
-		setApiConfiguration((prev) => ({ ...prev, [field]: event.target.value }))
+		setApiConfiguration({ ...apiConfiguration, [field]: event.target.value })
 	}
 
 	const { selectedProvider, selectedModelId, selectedModelInfo } = useMemo(() => {
@@ -65,10 +69,17 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 				<label htmlFor="api-provider">
 					<span style={{ fontWeight: 500 }}>API Provider</span>
 				</label>
-				<VSCodeDropdown id="api-provider" value={selectedProvider} onChange={handleInputChange("apiProvider")}>
+				<VSCodeDropdown
+					id="api-provider"
+					value={selectedProvider}
+					onChange={handleInputChange("apiProvider")}
+					style={{ minWidth: 130 }}>
 					<VSCodeOption value="anthropic">Anthropic</VSCodeOption>
-					<VSCodeOption value="bedrock">AWS Bedrock</VSCodeOption>
 					<VSCodeOption value="openrouter">OpenRouter</VSCodeOption>
+					<VSCodeOption value="bedrock">AWS Bedrock</VSCodeOption>
+					<VSCodeOption value="vertex">GCP Vertex AI</VSCodeOption>
+					<VSCodeOption value="openai">OpenAI Compatible</VSCodeOption>
+					<VSCodeOption value="ollama">Ollama</VSCodeOption>
 				</VSCodeDropdown>
 			</div>
 
@@ -77,6 +88,7 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 					<VSCodeTextField
 						value={apiConfiguration?.apiKey || ""}
 						style={{ width: "100%" }}
+						type="password"
 						onInput={handleInputChange("apiKey")}
 						placeholder="Enter API Key...">
 						<span style={{ fontWeight: 500 }}>Anthropic API Key</span>
@@ -88,9 +100,11 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 							color: "var(--vscode-descriptionForeground)",
 						}}>
 						This key is stored locally and only used to make API requests from this extension.
-						<VSCodeLink href="https://console.anthropic.com/" style={{ display: "inline" }}>
-							You can get an Anthropic API key by signing up here.
-						</VSCodeLink>
+						{!apiConfiguration?.apiKey && (
+							<VSCodeLink href="https://console.anthropic.com/" style={{ display: "inline" }}>
+								You can get an Anthropic API key by signing up here.
+							</VSCodeLink>
+						)}
 					</p>
 				</div>
 			)}
@@ -100,24 +114,29 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 					<VSCodeTextField
 						value={apiConfiguration?.openRouterApiKey || ""}
 						style={{ width: "100%" }}
+						type="password"
 						onInput={handleInputChange("openRouterApiKey")}
 						placeholder="Enter API Key...">
 						<span style={{ fontWeight: 500 }}>OpenRouter API Key</span>
 					</VSCodeTextField>
+					{!apiConfiguration?.openRouterApiKey && (
+						<VSCodeButtonLink href={getOpenRouterAuthUrl(uriScheme)} style={{ margin: "5px 0 0 0" }}>
+							Get OpenRouter API Key
+						</VSCodeButtonLink>
+					)}
 					<p
 						style={{
 							fontSize: "12px",
 							marginTop: "5px",
 							color: "var(--vscode-descriptionForeground)",
 						}}>
-						This key is stored locally and only used to make API requests from this extension.
-						<VSCodeLink href="https://openrouter.ai/" style={{ display: "inline" }}>
-							You can get an OpenRouter API key by signing up here.
-						</VSCodeLink>{" "}
-						<span style={{ color: "var(--vscode-errorForeground)" }}>
-							(<span style={{ fontWeight: 500 }}>Note:</span> OpenRouter support is experimental and may
-							not work well with large files.)
-						</span>
+						This key is stored locally and only used to make API requests from this extension.{" "}
+						{/* {!apiConfiguration?.openRouterApiKey && (
+							<span style={{ color: "var(--vscode-charts-green)" }}>
+								(<span style={{ fontWeight: 500 }}>Note:</span> OpenRouter is recommended for high rate
+								limits, prompt caching, and wider selection of models.)
+							</span>
+						)} */}
 					</p>
 				</div>
 			)}
@@ -127,6 +146,7 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 					<VSCodeTextField
 						value={apiConfiguration?.awsAccessKey || ""}
 						style={{ width: "100%" }}
+						type="password"
 						onInput={handleInputChange("awsAccessKey")}
 						placeholder="Enter Access Key...">
 						<span style={{ fontWeight: 500 }}>AWS Access Key</span>
@@ -134,9 +154,18 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 					<VSCodeTextField
 						value={apiConfiguration?.awsSecretKey || ""}
 						style={{ width: "100%" }}
+						type="password"
 						onInput={handleInputChange("awsSecretKey")}
 						placeholder="Enter Secret Key...">
 						<span style={{ fontWeight: 500 }}>AWS Secret Key</span>
+					</VSCodeTextField>
+					<VSCodeTextField
+						value={apiConfiguration?.awsSessionToken || ""}
+						style={{ width: "100%" }}
+						type="password"
+						onInput={handleInputChange("awsSessionToken")}
+						placeholder="Enter Session Token...">
+						<span style={{ fontWeight: 500 }}>AWS Session Token</span>
 					</VSCodeTextField>
 					<div className="dropdown-container">
 						<label htmlFor="aws-region-dropdown">
@@ -177,17 +206,148 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 							marginTop: "5px",
 							color: "var(--vscode-descriptionForeground)",
 						}}>
-						These credentials are stored locally and only used to make API requests from this extension.
+						Authenticate by either providing the keys above or use the default AWS credential providers,
+						i.e. ~/.aws/credentials or environment variables. These credentials are only used locally to
+						make API requests from this extension.
+					</p>
+				</div>
+			)}
+
+			{apiConfiguration?.apiProvider === "vertex" && (
+				<div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+					<VSCodeTextField
+						value={apiConfiguration?.vertexProjectId || ""}
+						style={{ width: "100%" }}
+						onInput={handleInputChange("vertexProjectId")}
+						placeholder="Enter Project ID...">
+						<span style={{ fontWeight: 500 }}>Google Cloud Project ID</span>
+					</VSCodeTextField>
+					<div className="dropdown-container">
+						<label htmlFor="vertex-region-dropdown">
+							<span style={{ fontWeight: 500 }}>Google Cloud Region</span>
+						</label>
+						<VSCodeDropdown
+							id="vertex-region-dropdown"
+							value={apiConfiguration?.vertexRegion || ""}
+							style={{ width: "100%" }}
+							onChange={handleInputChange("vertexRegion")}>
+							<VSCodeOption value="">Select a region...</VSCodeOption>
+							<VSCodeOption value="us-east5">us-east5</VSCodeOption>
+							<VSCodeOption value="us-central1">us-central1</VSCodeOption>
+							<VSCodeOption value="europe-west1">europe-west1</VSCodeOption>
+							<VSCodeOption value="europe-west4">europe-west4</VSCodeOption>
+							<VSCodeOption value="asia-southeast1">asia-southeast1</VSCodeOption>
+						</VSCodeDropdown>
+					</div>
+					<p
+						style={{
+							fontSize: "12px",
+							marginTop: "5px",
+							color: "var(--vscode-descriptionForeground)",
+						}}>
+						To use Google Cloud Vertex AI, you need to
 						<VSCodeLink
-							href="https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html"
+							href="https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-claude#before_you_begin"
 							style={{ display: "inline" }}>
-							You can find your AWS access key and secret key here.
+							{
+								"1) create a Google Cloud account › enable the Vertex AI API › enable the desired Claude models,"
+							}
+						</VSCodeLink>{" "}
+						<VSCodeLink
+							href="https://cloud.google.com/docs/authentication/provide-credentials-adc#google-idp"
+							style={{ display: "inline" }}>
+							{"2) install the Google Cloud CLI › configure Application Default Credentials."}
 						</VSCodeLink>
 					</p>
 				</div>
 			)}
 
-			{showModelOptions && (
+			{selectedProvider === "openai" && (
+				<div>
+					<VSCodeTextField
+						value={apiConfiguration?.openAiBaseUrl || ""}
+						style={{ width: "100%" }}
+						type="url"
+						onInput={handleInputChange("openAiBaseUrl")}
+						placeholder={"Enter base URL..."}>
+						<span style={{ fontWeight: 500 }}>Base URL</span>
+					</VSCodeTextField>
+					<VSCodeTextField
+						value={apiConfiguration?.openAiApiKey || ""}
+						style={{ width: "100%" }}
+						type="password"
+						onInput={handleInputChange("openAiApiKey")}
+						placeholder="Enter API Key...">
+						<span style={{ fontWeight: 500 }}>API Key</span>
+					</VSCodeTextField>
+					<VSCodeTextField
+						value={apiConfiguration?.openAiModelId || ""}
+						style={{ width: "100%" }}
+						onInput={handleInputChange("openAiModelId")}
+						placeholder={"Enter Model ID..."}>
+						<span style={{ fontWeight: 500 }}>Model ID</span>
+					</VSCodeTextField>
+					<p
+						style={{
+							fontSize: "12px",
+							marginTop: "5px",
+							color: "var(--vscode-descriptionForeground)",
+						}}>
+						You can use any OpenAI compatible API with models that support tool use.{" "}
+						<span style={{ color: "var(--vscode-errorForeground)" }}>
+							(<span style={{ fontWeight: 500 }}>Note:</span> Claude Dev uses complex prompts, so less
+							capable models may not work as expected.)
+						</span>
+					</p>
+				</div>
+			)}
+
+			{selectedProvider === "ollama" && (
+				<div>
+					<VSCodeTextField
+						value={apiConfiguration?.ollamaModelId || ""}
+						style={{ width: "100%" }}
+						onInput={handleInputChange("ollamaModelId")}
+						placeholder={"e.g. llama3.1"}>
+						<span style={{ fontWeight: 500 }}>Model ID</span>
+					</VSCodeTextField>
+					<p
+						style={{
+							fontSize: "12px",
+							marginTop: "5px",
+							color: "var(--vscode-descriptionForeground)",
+						}}>
+						Ollama allows you to run models locally on your computer. For instructions on how to get started
+						with Ollama, see their
+						<VSCodeLink
+							href="https://github.com/ollama/ollama/blob/main/README.md"
+							style={{ display: "inline" }}>
+							quickstart guide.
+						</VSCodeLink>{" "}
+						You can use any models that support{" "}
+						<VSCodeLink href="https://ollama.com/search?c=tools" style={{ display: "inline" }}>
+							tool use.
+						</VSCodeLink>
+						<span style={{ color: "var(--vscode-errorForeground)" }}>
+							(<span style={{ fontWeight: 500 }}>Note:</span> Claude Dev uses complex prompts, so less
+							capable models may not work as expected.)
+						</span>
+					</p>
+				</div>
+			)}
+
+			{apiErrorMessage && (
+				<p
+					style={{
+						margin: "-10px 0 4px 0",
+						fontSize: 12,
+						color: "var(--vscode-errorForeground)",
+					}}>
+					{apiErrorMessage}
+				</p>
+			)}
+
+			{selectedProvider !== "openai" && selectedProvider !== "ollama" && showModelOptions && (
 				<>
 					<div className="dropdown-container">
 						<label htmlFor="model-id">
@@ -196,6 +356,7 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 						{selectedProvider === "anthropic" && createDropdown(anthropicModels)}
 						{selectedProvider === "openrouter" && createDropdown(openRouterModels)}
 						{selectedProvider === "bedrock" && createDropdown(bedrockModels)}
+						{selectedProvider === "vertex" && createDropdown(vertexModels)}
 					</div>
 
 					<ModelInfoView modelInfo={selectedModelInfo} />
@@ -205,16 +366,20 @@ const ApiOptions: React.FC<ApiOptionsProps> = ({ showModelOptions, apiConfigurat
 	)
 }
 
-const ModelInfoView = ({ modelInfo }: { modelInfo: ModelInfo }) => {
-	const formatPrice = (price: number) => {
-		return new Intl.NumberFormat("en-US", {
-			style: "currency",
-			currency: "USD",
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		}).format(price)
-	}
+export function getOpenRouterAuthUrl(uriScheme?: string) {
+	return `https://openrouter.ai/auth?callback_url=${uriScheme || "vscode"}://saoudrizwan.claude-dev/openrouter`
+}
 
+export const formatPrice = (price: number) => {
+	return new Intl.NumberFormat("en-US", {
+		style: "currency",
+		currency: "USD",
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	}).format(price)
+}
+
+const ModelInfoView = ({ modelInfo }: { modelInfo: ModelInfo }) => {
 	return (
 		<p style={{ fontSize: "12px", marginTop: "2px", color: "var(--vscode-descriptionForeground)" }}>
 			<ModelInfoSupportsItem
@@ -260,7 +425,7 @@ const ModelInfoSupportsItem = ({
 	<span
 		style={{
 			fontWeight: 500,
-			color: isSupported ? "var(--vscode-testing-iconPassed)" : "var(--vscode-errorForeground)",
+			color: isSupported ? "var(--vscode-charts-green)" : "var(--vscode-errorForeground)",
 		}}>
 		<i
 			className={`codicon codicon-${isSupported ? "check" : "x"}`}
@@ -280,8 +445,8 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 	const provider = apiConfiguration?.apiProvider || "anthropic"
 	const modelId = apiConfiguration?.apiModelId
 
-	const getProviderData = (models: Record<string, ModelInfo>, defaultId: ApiModelId) => {
-		let selectedModelId: ApiModelId
+	const getProviderData = (models: Record<string, ModelInfo>, defaultId: string) => {
+		let selectedModelId: string
 		let selectedModelInfo: ModelInfo
 		if (modelId && modelId in models) {
 			selectedModelId = modelId
@@ -299,6 +464,22 @@ export function normalizeApiConfiguration(apiConfiguration?: ApiConfiguration) {
 			return getProviderData(openRouterModels, openRouterDefaultModelId)
 		case "bedrock":
 			return getProviderData(bedrockModels, bedrockDefaultModelId)
+		case "vertex":
+			return getProviderData(vertexModels, vertexDefaultModelId)
+		case "openai":
+			return {
+				selectedProvider: provider,
+				selectedModelId: apiConfiguration?.openAiModelId ?? "",
+				selectedModelInfo: openAiModelInfoSaneDefaults,
+			}
+		case "ollama":
+			return {
+				selectedProvider: provider,
+				selectedModelId: apiConfiguration?.ollamaModelId ?? "",
+				selectedModelInfo: openAiModelInfoSaneDefaults,
+			}
+		default:
+			return getProviderData(anthropicModels, anthropicDefaultModelId)
 	}
 }
 

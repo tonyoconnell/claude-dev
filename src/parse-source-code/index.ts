@@ -1,8 +1,10 @@
 import * as fs from "fs/promises"
-import { globby } from "globby"
+import { globby, Options } from "globby"
 import os from "os"
 import * as path from "path"
 import { LanguageParser, loadRequiredLanguageParsers } from "./languageParser"
+
+export const LIST_FILES_LIMIT = 500
 
 // TODO: implement caching behavior to avoid having to keep analyzing project for new tasks.
 export async function parseSourceCodeForDefinitionsTopLevel(dirPath: string): Promise<string> {
@@ -96,8 +98,42 @@ export async function listFiles(dirPath: string, recursive: boolean): Promise<st
 		onlyFiles: false, // true by default, false means it will list directories on their own too
 	}
 	// * globs all files in one dir, ** globs files in nested directories
-	const files = await globby(recursive ? "**" : "*", options)
+	const files = recursive
+		? await globbyLevelByLevel(options)
+		: (await globby("*", options)).slice(0, LIST_FILES_LIMIT)
 	return files
+}
+
+// globby doesnt natively support top down level by level globbing, so we implement it ourselves
+async function globbyLevelByLevel(options?: Options) {
+	let results: string[] = []
+	const globbingProcess = async () => {
+		let currentLevel = 0
+		while (results.length < LIST_FILES_LIMIT) {
+			const pattern = currentLevel === 0 ? "*" : `${"*/".repeat(currentLevel)}*`
+			const filesAtLevel = await globby(pattern, options)
+			if (filesAtLevel.length === 0) {
+				break
+			}
+			results.push(...filesAtLevel)
+			if (results.length >= LIST_FILES_LIMIT) {
+				results = results.slice(0, LIST_FILES_LIMIT)
+				break
+			}
+			currentLevel++
+		}
+		return results
+	}
+	// Timeout after 10 seconds and return partial results
+	const timeoutPromise = new Promise<string[]>((_, reject) => {
+		setTimeout(() => reject(new Error("Globbing timeout")), 10_000)
+	})
+	try {
+		return await Promise.race([globbingProcess(), timeoutPromise])
+	} catch (error) {
+		console.warn("Globbing timed out, returning partial results")
+		return results
+	}
 }
 
 function separateFiles(allFiles: string[]): { filesToParse: string[]; remainingFiles: string[] } {

@@ -29,6 +29,7 @@ const copyWasmFiles = {
 	name: "copy-wasm-files",
 	setup(build) {
 		build.onEnd(() => {
+			// tree sitter
 			const sourceDir = path.join(__dirname, "node_modules", "web-tree-sitter")
 			const targetDir = path.join(__dirname, "dist")
 
@@ -49,6 +50,7 @@ const copyWasmFiles = {
 				"c_sharp",
 				"ruby",
 				"java",
+				"php",
 				"swift",
 			]
 
