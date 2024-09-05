@@ -1,8 +1,8 @@
 {
   "name": "onedotieblockbuilder",
-  "displayName": "ONE",
+  "displayName": "ONE Block",
   "description": "Build your app with AI-powered blocks. Powered by Sveltekit, Supabase, Typescript and Claude.",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "icon": "icon.png",
   "engines": {
     "vscode": "^1.84.0"

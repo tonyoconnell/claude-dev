@@ -19,7 +19,7 @@ export class OpenRouterHandler implements ApiHandler {
 			baseURL: "https://openrouter.ai/api/v1",
 			apiKey: this.options.openRouterApiKey,
 			defaultHeaders: {
-				"HTTP-Referer": "https://github.com/saoudrizwan/vsone", // Optional, for including your app on openrouter.ai rankings.
+				"HTTP-Referer": "https://github.com/one-ie/vsone", // Optional, for including your app on openrouter.ai rankings.
 				"X-Title": "vsone", // Optional. Shows in rankings on openrouter.ai.
 			},
 		})

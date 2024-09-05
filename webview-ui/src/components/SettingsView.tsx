@@ -169,8 +169,8 @@ const SettingsView = ({
 					}}>
 					<p style={{ wordWrap: "break-word", margin: 0, padding: 0 }}>
 						If you have any questions or feedback, feel free to open an issue at{" "}
-						<VSCodeLink href="https://github.com/saoudrizwan/vsone" style={{ display: "inline" }}>
-							https://github.com/saoudrizwan/vsone
+						<VSCodeLink href="https://github.com/one-ie/vsone" style={{ display: "inline" }}>
+							https://github.com/one-ie/vsone
 						</VSCodeLink>
 					</p>
 					<p style={{ fontStyle: "italic", margin: "10px 0 0 0", padding: 0 }}>v{version}</p>
